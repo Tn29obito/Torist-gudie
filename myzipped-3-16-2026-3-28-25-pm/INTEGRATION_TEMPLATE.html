@@ -1,0 +1,212 @@
+<!-- 
+    TORI PREMIUM INTEGRATION TEMPLATE
+    Drop this into any destination page (e.g., Jaipur.html, Goa.html)
+    to enable Firebase-backed "Save to Trip" functionality.
+    
+    Location: Insert before closing </body> tag.
+-->
+<div id="tori-notification-container" style="position: fixed; top: 100px; right: 30px; z-index: 10000;"></div>
+
+<script type="module">
+    // --- 1. CONFIGURATION & IMPORTS ---
+    import { app, auth, db } from '../../database/firebase-config.js';
+    import { ItineraryService, ItineraryPointService, PointOfInterestService } from '../../database/firestore-schema.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Extract page metadata
+    const pageMetadata = {
+        name: document.querySelector('.hero-title')?.textContent.trim() || document.title.split('|')[0].trim(),
+        id: window.location.pathname.split('/').pop().replace('.html', '').toLowerCase(),
+        region: document.querySelector('.hero-badge')?.textContent.trim() || 'India'
+    };
+
+    console.log('💎 Tori Premium Integration Active:', pageMetadata.name);
+
+    // --- 2. AUTHENTICATION TRACKER ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            updateNavForUser(user);
+            injectSaveControls(user);
+        } else {
+            updateNavForGuest();
+        }
+    });
+
+    // --- 3. UI INJECTION ---
+    function updateNavForUser(user) {
+        const nav = document.querySelector('.navbar-nav');
+        if (nav && !document.getElementById('tori-user-nav')) {
+            const li = document.createElement('li');
+            li.id = 'tori-user-nav';
+            li.className = 'nav-item';
+            li.innerHTML = `
+                <a class="nav-link" href="html/itinerary-manager.html" style="color: #f8b600; font-weight: 600;">
+                    👤 ${user.displayName || user.email.split('@')[0]}
+                </a>
+            `;
+            nav.appendChild(li);
+        }
+    }
+
+    function updateNavForGuest() {
+        const nav = document.querySelector('.navbar-nav');
+        if (nav && !document.getElementById('tori-login-nav')) {
+            const li = document.createElement('li');
+            li.id = 'tori-login-nav';
+            li.className = 'nav-item';
+            li.innerHTML = `
+                <a class="nav-link" href="html/login.html" style="color: #f8b600;">🔐 Login</a>
+            `;
+            nav.appendChild(li);
+        }
+    }
+
+    function injectSaveControls(user) {
+        const ctaArea = document.querySelector('.cta-section');
+        if (ctaArea && !document.getElementById('tori-save-btn')) {
+            const btn = document.createElement('button');
+            btn.id = 'tori-save-btn';
+            btn.className = 'cta-btn tori-premium-btn';
+            btn.innerHTML = `
+                <span class="btn-icon">✨</span>
+                <span class="btn-text">Add to My Trip</span>
+            `;
+
+            // Style injection
+            btn.style.cssText = `
+                margin-left: 15px;
+                background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+                border: none;
+                padding: 14px 28px;
+                border-radius: 50px;
+                color: white;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                display: inline-flex;
+                align-items: center;
+                gap: 12px;
+                box-shadow: 0 10px 20px rgba(17, 153, 142, 0.2);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-size: 0.9rem;
+            `;
+
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'scale(1.05) translateY(-3px)';
+                btn.style.boxShadow = '0 15px 30px rgba(17, 153, 142, 0.4)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1) translateY(0)';
+                btn.style.boxShadow = '0 10px 20px rgba(17, 153, 142, 0.2)';
+            });
+
+            btn.onclick = async () => {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                btn.innerHTML = '<span>⚡ Processing...</span>';
+                await triggerSaveAction(user);
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerHTML = '<span>✨ Add to My Trip</span>';
+            };
+
+            const existingLink = ctaArea.querySelector('a');
+            if (existingLink) existingLink.insertAdjacentElement('afterend', btn);
+        }
+    }
+
+    // --- 4. CORE ACTION: SAVE TO FIREBASE ---
+    async function triggerSaveAction(user) {
+        try {
+            // Find or Create Itinerary
+            const itineraries = await ItineraryService.getUserItineraries(user.uid);
+            let targetId;
+
+            if (itineraries.success && itineraries.data.length > 0) {
+                targetId = itineraries.data[0].id;
+            } else {
+                const newIt = await ItineraryService.createItinerary(user.uid, {
+                    name: 'My Grand India Tour',
+                    description: 'Itinerary generated from Tori Explore',
+                    public: false
+                });
+                if (!newIt.success) throw new Error('Could not initialize itinerary');
+                targetId = newIt.id;
+            }
+
+            // Check if POI exists in DB, if not seed a basic entry
+            const poiResult = await PointOfInterestService.getPOI(pageMetadata.id);
+            if (!poiResult.success) {
+                console.warn('POI not found in registry, creating shadow entry...');
+                // You could optionally seed the POI here
+            }
+
+            // Add Point
+            const addResult = await ItineraryPointService.addPoint({
+                itineraryId: targetId,
+                pointOfInterestId: pageMetadata.id,
+                orderInItinerary: Date.now(),
+                notes: `Discovered on ${new Date().toLocaleDateString()}`
+            });
+
+            if (addResult.success) {
+                showPremiumToast(`✅ ${pageMetadata.name} synchronized to your trip!`, 'success');
+            } else {
+                throw new Error(addResult.error);
+            }
+
+        } catch (err) {
+            showPremiumToast(`❌ Sync Failed: ${err.message}`, 'error');
+        }
+    }
+
+    // --- 5. PREMIUM NOTIFICATION SYSTEM ---
+    function showPremiumToast(msg, type) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-left: 5px solid ${type === 'success' ? '#38ef7d' : '#e74c3c'};
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            color: #2c3e50;
+            font-weight: 600;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: toriSlideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            position: relative;
+        `;
+        toast.innerHTML = `
+            <span>${msg}</span>
+            <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#95a5a6;margin-left:15px;">✕</button>
+        `;
+
+        document.getElementById('tori-notification-container').appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'toriSlideOut 0.5s forwards';
+            setTimeout(() => toast.remove(), 500);
+        }, 4000);
+    }
+
+    // Add Keyframes to Head
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        @keyframes toriSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toriSlideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .tori-premium-btn:active { transform: scale(0.95) !important; }
+    `;
+    document.head.appendChild(styleSheet);
+
+</script>

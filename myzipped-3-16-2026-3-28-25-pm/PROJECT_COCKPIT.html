@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Cockpit - Tour India Ecosystem</title>
+    <!-- Premium Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #06b6d4;
+            --dark: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 0% 0%, #1e1b4b 0%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 40px 5%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* 5 PILLAR GRID */
+        .cockpit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .pillar-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.2);
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            transition: transform 0.5s ease;
+        }
+
+        .pillar-card:hover .icon {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .pillar-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .pillar-card p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .btn-open {
+            margin-top: 20px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .pillar-card:hover .btn-open {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+        }
+
+        .dot.offline {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .cockpit-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>Project Cockpit</h1>
+        <p class="subtitle">Unified Development Control</p>
+    </header>
+
+    <div class="cockpit-grid">
+        <!-- 1. PLACES -->
+        <div class="pillar-card">
+            <div class="icon">🏛️</div>
+            <h3>PLACES</h3>
+            <p>Content & Destination data for the 50+ locations across India.</p>
+            <a href="database/seed-poi-data.js" class="btn-open">Manage Data</a>
+        </div>
+
+        <!-- 2. DATABASE -->
+        <div class="pillar-card">
+            <div class="icon">🗄️</div>
+            <h3>DATABASE</h3>
+            <p>Firestore schemas, security rules, and server-side management tools.</p>
+            <a href="database/firestore.rules" class="btn-open">Security Rules</a>
+        </div>
+
+        <!-- 3. BACKEND -->
+        <div class="pillar-card">
+            <div class="icon">⚙️</div>
+            <h3>BACKEND</h3>
+            <p>Node.js and Python API endpoints handling Auth & Bookings.</p>
+            <a href="backend/admin_dashboard.html" class="btn-open">Open Dashboard</a>
+        </div>
+
+        <!-- 4. FRONTEND -->
+        <div class="pillar-card">
+            <div class="icon">💻</div>
+            <h3>FRONTEND</h3>
+            <p>Modern React app and legacy static HTML architecture.</p>
+            <a href="frontend-react/src/App.jsx" class="btn-open">View Code</a>
+        </div>
+
+        <!-- 5. ANIMATIONS -->
+        <div class="pillar-card">
+            <div class="icon">✨</div>
+            <h3>ANIMATIONS</h3>
+            <p>Visual effects, glassmorphism UI, and interactive performance demo.</p>
+            <a href="interactive-demo/index.html" class="btn-open">Test Draggable</a>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="dot"></div>
+            <span>Python Backend: Online</span>
+        </div>
+        <div class="status-item">
+            <div class="dot"></div>
+            <span>Node.js API: Online</span>
+        </div>
+        <div class="status-item">
+            <div class="dot"></div>
+            <span>Firestore DB: Connected</span>
+        </div>
+        <div class="status-item">
+            <a href="MIGRATION_GUIDE.md"
+                style="color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 600;">Full Migration
+                Guide →</a>
+        </div>
+    </div>
+
+</body>
+
+</html>
